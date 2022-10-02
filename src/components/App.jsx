@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import "./styles.css";
 import Searchbar from './SearchBar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
@@ -7,90 +7,89 @@ import Modal from './Modal/Modal';
 
 
 // Оголошуємо необхідні СТЕЙТИ!!!
-export class App extends Component {
-  static PERPAGE = 12;
-  state = {
-    searchName: "",
-    gallery: [],
-    page: 1,
-    totalItems: 0,
-    isLoading: false,
-    showModal: false,
-    currentImg: {},
-    error: null,
-  }
+export function App ()  {
+  const PERPAGE = 12;
+  const [searchName, setSearchName] = useState("");
+  const [gallery, setGallery] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [currentImg, setCurrentImg] = useState({});
+  const [error, setError] = useState(null);
+  
       
   
-  componentDidUpdate(_, prevState) {
-    const { page, searchName } = this.state
-    if (prevState.page !== page || prevState.searchName !== searchName) {
-      this.doQuery(searchName, page)
-    }
+  // componentDidUpdate(_, prevState) {
+  //   const { page, searchName } = this.state
+  //   if (prevState.page !== page || prevState.searchName !== searchName) {
+  //     this.doQuery(searchName, page)
+  //   }
       
-    if (prevState.gallery.length !== 0 &
-      prevState.gallery.length < this.state.gallery.length) {
-      window.scrollBy({
-        top: window.innerHeight - 200,
-        behavior: 'smooth',
-      })
-    }
-  }
-  doQuery() {
+  //   if (prevState.gallery.length !== 0 &
+  //     prevState.gallery.length < this.state.gallery.length) {
+  //     window.scrollBy({
+  //       top: window.innerHeight - 200,
+  //       behavior: 'smooth',
+  //     })
+  //   }
+  // }
+  useEffect(() => {
     const URL = "https://pixabay.com/api/";
     const key = "29184640-266ee5361b73d654bedf55260";
-    const { page, searchName } = this.state;
-    this.setState({ isLoading: true });
-    this.doFetch(URL, key, page, searchName);
-  }
-  doFetch(URL, key, page, searchName) {
-    fetch(`${URL}?q=${searchName}&page=${page}&key=${key}&image_type=photo&orientation=horizontal&per_page=${App.PERPAGE}`)
-      .then(resp => resp.json())
-      .then(gallery => {
-        if (gallery.hits.length === 0) {
-          return Promise.reject(new Error("Unfortunately, the search did not yield results!"))
-        }
-        
-        this.handleResponse(gallery);
-      })
-      .catch(error => { this.setState({ error }) })
-      .finally(() => {
-        this.setState({ loading: false })
-      })
-  }
-  handleResponse(gallery) {
-    this.state.gallery.length === 0 ?
-      this.setState({ gallery: gallery.hits, totalItems: gallery.totalHits, isLoading: false, error: null }) :
-      this.setState(prev => ({ gallery: [...prev.gallery, ...gallery.hits], isLoading: false, erorr: null }));
-  }
-  onSubmit = (evt) => {
-    evt.preventDefault();
-    this.setState({
-      searchName: evt.target.elements.searchName.value.trim().toLowerCase(),
-      page: 1,
-      gallery: [],
-    });
-    evt.currentTarget.reset();
-}
     
-  loadMore = () => {
-    this.setState(prev => ({ page: prev.page + 1 }))
+    setIsLoading(true);
+    const doFetch = (() => {
+      fetch(`${URL}?q=${searchName}&page=${PERPAGE}&key=${key}&image_type=photo&orientation=horizontal&per_page=${App.PERPAGE}`)
+        .then(resp => resp.json())
+        .then(gallery => {
+          if (gallery.hits.length === 0) {
+            return Promise.reject(new Error("Unfortunately, the search did not yield results!"))
+          }
+        
+          handleResponse(gallery);
+        })
+        .catch(error => setError(error))
+        .finally(() => setIsLoading(false))
+    });
+    doFetch()
+  }, [page, searchName])
+
+
+  const handleResponse = (gallery) => {
+    gallery.length === 0 ? setGallery(gallery.hits) : setGallery(prev => [...prev, ...gallery.hits]);
+    setTotalItems(gallery.totalHits);
+    setIsLoading(false);
+    setError(null);
   }
-  toggleModal = (img) => {
-    this.setState(prev => ({ showModal: !prev.showModal, currentImg: img }))
+  const  onSubmit = (evt) => {
+    evt.preventDefault();
+     setSearchName(evt.target.elements.searchName.value.trim().toLowerCase());
+    setPage(1);
+    setGallery([])
+    evt.currentTarget.reset();
+    };
+    
+
+    
+  const loadMore = () => setPage(page => page + 1)
+
+   const toggleModal = (img) => {
+    setShowModal(!showModal);
+    setCurrentImg(img)
   }
-  handleOverlayClick = (evt) => {
-    if (evt.target === evt.currentTarget) this.toggleModal({})
+  const  handleOverlayClick = (evt) => {
+    if (evt.target === evt.currentTarget) toggleModal({})
   }
-  handleEsc = (evt) => {
-    if (evt.code === 'Escape') this.toggleModal({})
+  const handleEsc = (evt) => {
+    if (evt.code === 'Escape') toggleModal({})
   }
 
-  render() {
-    const { gallery, page, totalItems, isLoading, showModal, currentImg, error,  searchName} = this.state;
+  
     if (error) {
       return (
         <div>
-          <Searchbar onSubmit={this.onSubmit} />
+          <Searchbar onSubmit={onSubmit} />
           <p className="error">Oops . . . !!! &#128579;<br></br> {error.message} </p>
         </div>
       )
@@ -98,7 +97,7 @@ export class App extends Component {
     if (!searchName) {
        return (
         <div>
-          <Searchbar onSubmit={this.onSubmit} />
+          <Searchbar onSubmit={onSubmit} />
           <p className="coment">Enter a search topic!</p>
         </div>
       )
@@ -107,23 +106,23 @@ export class App extends Component {
     
     return (
       <div>
-        <Searchbar onSubmit={this.onSubmit} />
+        <Searchbar onSubmit={onSubmit} />
         {isLoading && <Loader />}
         {gallery.length !== 0 &&
           <ImageGallery
             gallery={gallery}
             page={page}
             totalItems={totalItems}
-            loadMore={this.loadMore}
+            loadMore={loadMore}
             isLoading={isLoading}
-            showModal={this.toggleModal} />
+            showModal={toggleModal} />
         }
-        {showModal && <Modal handleOverlayClick={this.handleOverlayClick} onEsc={this.handleEsc} currentImg={currentImg} />}
+        {showModal && <Modal handleOverlayClick={handleOverlayClick} onEsc={handleEsc} currentImg={currentImg} />}
    
       </div>
     );
   }
-}
+
 
 
 
