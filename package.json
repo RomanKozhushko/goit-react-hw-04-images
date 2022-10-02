@@ -2,7 +2,7 @@
   "name": "goit-react-hw-03-image-finder",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://romankozhushko.github.io/goit-react-hw-03-image-finder/",
+  "homepage": "https://romankozhushko.github.io/goit-react-hw-04-images/",
   "dependencies": {
     "@emotion/react": "^11.9.0",
     "@testing-library/jest-dom": "^5.16.1",
