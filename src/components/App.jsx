@@ -32,13 +32,14 @@ export function App() {
   //   }
   // }
   useEffect(() => {
+    if (!searchName) return;
     const URL = 'https://pixabay.com/api/';
     const key = '29184640-266ee5361b73d654bedf55260';
 
     setIsLoading(true);
-    const doFetch = () => {
+    const doFetch = (() => {
       fetch(
-        `${URL}?q=${searchName}&page=${PERPAGE}&key=${key}&image_type=photo&orientation=horizontal&per_page=${App.PERPAGE}`
+        `${URL}?q=${searchName}&page=${page}&key=${key}&image_type=photo&orientation=horizontal&per_page=${PERPAGE}`
       )
         .then(resp => resp.json())
         .then(gallery => {
@@ -52,7 +53,7 @@ export function App() {
         })
         .catch(error => setError(error))
         .finally(() => setIsLoading(false));
-    };
+    });
     doFetch();
   }, [page, searchName]);
 
